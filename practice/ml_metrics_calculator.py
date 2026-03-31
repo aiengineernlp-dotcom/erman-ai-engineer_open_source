@@ -19,4 +19,39 @@ def calculate_matrics(y_true: list[int], y_pred: list[int]) -> dict[str, float]:
 
     return {
 
+        "total_samples":n,
+        "correct":correct,
+        "accuracy":correct/n,
+        "error_rate":1-(correct/n),
+        "true_positive":true_pos,
+        "false_positive":false_pos,
+        "false_negative":false_neg,
+        "precision":precision,
+        "recall":recall
     }
+
+def display_metrics(metrics: dict[str, float])-> None:
+    """Display in a professional format"""
+    print("\n" + "=" * 140)
+    print(f"{'ML MODEL EVALUATION REPORT':^55}")
+    print("=" * 140)
+    print(f"  Samples:{metrics['total_samples']}  ")
+    print(f"  Correct:{metrics['correct']}")
+    print(f"  Accuracy:{metrics['accuracy']:.2%}")
+    print(f"  Error Rate:{metrics['error_rate']:.2%}")
+    print("=" * 140)
+    print(f"  True Positive:{metrics['true_positive']}")
+    print(f"  False Positive:{metrics['false_positive']}")
+    print(f"  False Negative:{metrics['false_negative']}")
+    print("=" * 140)
+    print(f"  Precision:{metrics['precision']:.4f}")
+    print(f"  Recall:{metrics['recall']:.4f}")
+    print("=" * 140)
+
+
+
+
+y_true = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0]  # réalité
+y_pred = [0, 1, 0, 0, 1, 1, 0, 1, 0, 0]  # prédictions modèle
+metrics = calculate_matrics(y_true, y_pred)
+display_metrics(metrics)

@@ -1,0 +1,3 @@
+Patient: John | Age: 34 | Symptoms:fever
+Patient: Sara | Age: 28 | Symptoms:cough
+Patient: Bob | Age: 45 | Symptoms:headache

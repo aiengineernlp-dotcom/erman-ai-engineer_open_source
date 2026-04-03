@@ -5,12 +5,13 @@ class Patient:
     total_patients = 0
     # ATTRIBUTS DE CLASSE - PARTAGER PAR TOUTES LES INSTANCES (objects)
     def __init__(self, name: str, age: int, symptoms: list[str], gender: str):
-        self.name = name
-        self.age = age
-        self.symptoms = symptoms
-        self.gender = gender
-        self.id = Patient.total_patients + 1
-        Patient.total_patients = total_patients + 1  # corrige ce probleme il
+        #attribut d'instance propre a chaque patients
+        self.name       = name
+        self.age        = age
+        self.symptoms   = symptoms
+        self.gender     = gender
+        self.id         = Patient.total_patients + 1
+        Patient.total_patients = Patient.total_patients + 1
 
     def describe(self) -> str:
         """ Méthode d'Instance (object)  - qui va acceder aux attributs de l'instance (object) """

@@ -48,8 +48,7 @@
 
 
 """
-
-C'est un excellent exercice de base ! Pour passer au niveau supérieur et ne plus te laisser surprendre en "séance tenante", voici 5 exercices qui reprennent tes concepts (NumPy, reshape, statistiques) en ajoutant une petite dose de difficulté réelle.
+voici 5 exercices qui reprennent tes concepts (NumPy, reshape, statistiques) en ajoutant une petite dose de difficulté réelle.
 Imaginons que tu as 3 listes : noms, scores_examen (0-100), et heures_etude.
 ## Exercice 1 : Le Double Reshape et la Concaténation
 Transforme scores_examen et heures_etude en tableaux NumPy de format colonne (2D), puis combine-les pour créer une matrice X qui contient deux colonnes (une pour les scores, une pour les heures).

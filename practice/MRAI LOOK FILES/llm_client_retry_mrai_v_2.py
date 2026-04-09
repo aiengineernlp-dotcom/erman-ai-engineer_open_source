@@ -48,7 +48,7 @@ def llm_call_timer(model: str):
         print(f"   ❌ Echec au bout de  {ecouler_time:.3f}s : {type(e).__name__}")
 
 
-def mock_api_call(prompt: str, model: str, fail_rate: float = 0.4) -> dict:
+def mock_api_call(prompt: str, model: str, fail_rate: float = 0.4) -> dict:  # fonction qui va simuler un appel API
     """Simulate an LLM API call with random failures.
     fail_rate: probaility of failure on each attempt.
     """
@@ -75,14 +75,75 @@ def mock_api_call(prompt: str, model: str, fail_rate: float = 0.4) -> dict:
     return {
         "model": model,
 
-        "content": f"[Mock response to {prompt[:40]}...]",
+        "content": f"[Mock response to {prompt[:40]}...]",  # dans le prompt on prend les premiers 40 caracteres
 
         "usage": {
-            "prompt_tokens": len(prompt.split()),
-            "completion_tokens": 50,
-            "total_tokens": len(prompt.split()) + 50
+            "prompt_tokens": len(prompt.split()),  # prompt entre
+            "completion_tokens": 50,  # nombre de prompt de sorti
+            "total_tokens": len(prompt.split()) + 50  # la somme prompt entrer + prompt
         }
     }
+
+
+def call_with_retry(
+        prompt: str,
+        model: str = "gpt-4o",
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        fallback_model: str = "gpt-4o-mini"
+) -> dict:
+    """
+
+    Call LLM API with exponential backoff retry.
+
+    Strategy:
+         - RatelimitError -> wait then retry
+         - APITimeOutError -> retry immediatly (up to max)
+         - InvalidRequestError -> fail fast (no retry)
+         - All retries exhausted -> try Fallback model
+    """
+
+    last_error = None
+
+    for attempt in range(1, max_retries + 1):
+        current_model = model if attempt <= max_retries else fallback_model
+
+        try:
+            with llm_call_timer(current_model):  # on appelle la fonction ->>>>> llm_call_timer()
+                result = mock_api_call(prompt, current_model)  # on appelle la fonction ->>>>> mock_api_call ()
+            return {
+                **result,
+                "attempts": attempt,
+                "final_model": current_model
+            }
+        except InvalidRequestError as e:
+            # non recuperable - arret immediat
+            raise RuntimeError(
+                f"Invalid request (no retry): {e}"
+            ) from e
+
+        except RatelimitError as e:
+            wait = min(base_delay * (2 ** attempt), 30)
+            print(f" ⏳ Rate limited. waiting {wait:.1f}s"
+                  f"(attempt {attempt}/{max_retries})")
+            time.sleep(wait)
+            last_error = e
+
+        except (APITimeOutError, LLMError) as e:
+            if attempt < max_retries:
+                wait = base_delay * attempt
+                print(f" 🔄 Retriying in {wait:.1f}s"
+                      f"(attempt {attempt}/{max_retries})")
+                time.sleep(wait)
+            last_error = e
+
+    # Fallback model
+    print(f"\n ⚠️ ")
+
+
+
+
+
 
 
 

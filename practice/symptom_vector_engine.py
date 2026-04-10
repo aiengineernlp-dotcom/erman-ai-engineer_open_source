@@ -1,8 +1,18 @@
+# VERSION 1
+
+import numpy as np
+
+# un embedding est une facon de transformer quelque chose en nombre par exemple pour MRAI, les embeddings de symptomes sont les array numpy.
+# exemple:
+# - fiervre -> [0.12, -0.87, 0.45, ....]
+# - toux -> [0.09, -0.65, 0.30, ....]
+# donc un symptomes devient un vecteur de nombres, ainsi, L'IA peut comparer, calculer et comprendre
+embedding = np.array([0.12, -0.87,
+                      0.45, ])  # donc ici on voit que fiervre est devenu une serie de nombres dans une liste d'ou embedding.
+
 # Embedings des symptoms:
 # ici nous avons besoin de convertir les symptoms des patients en vecteurs. pour que le systeme comprenne, fait les comparaisons facilement et regarde les cas similaire avant de decider
 # plus exactement, nous allons faire par exemple que que si le patient entre dans MRAI fievre, toux maux de tete on va convertir ces symptomes en vecteurs numerique.
-
-import numpy as np
 
 # Dictionnaire des symptomps -> indices
 
@@ -66,7 +76,7 @@ def find_similar_patients(query_symptoms: list[str], patient_database: list[dict
     query_vectors = encoding_symptomps(query_symptoms)
     similarities = []
     for patient in patient_database:
-        patient_vector = encoding_symptomps(patient['symptomps'])
+        patient_vector = encoding_symptomps(patient['symptoms'])
         similarity = cosine_similarity(query_vectors, patient_vector)
 
         # similarities.append(similarity) # ici je comprend mais on  a plutot fait ceci en bas
@@ -77,10 +87,47 @@ def find_similar_patients(query_symptoms: list[str], patient_database: list[dict
         :top_k]  # key = lambda x : x['similarity']. car c'est le dictionnaire.  [:top_k] -> le slicing de 0 a 3-1 donc 2.
 
 
-def display_similar_report():
-    pass
+def display_similar_report(query: list[str], results: list[dict]) -> None:
+    print(f"\n    {'=' * 55}")
+    print(f"\n    {'MEDIROUTE AI SIMILARITY SEARCH':^55}")
+    print(f"\n    Query symptoms: {', '.join(query)}")
+    print(f"\n    {len(results)} similar cases:")
+    print(f"\n    {'-' * 55}")
 
-# =======================================================
+    for rank, r in enumerate(results, 1):
+        bar = "❚" * int(r['similarity'] * 20)
+
+        print(f"\n    #{rank} {r['name']}|" f"\n    Age: {r['age']} |" f"\n     Similarity: {r['similarity']:.2%}|")
+        print(f"\n    Symptoms   :  {r['symptoms']}|")
+        print(f"\n    Diagnosis :    {r['diagnosis']}|")
+        print(f"\n    Macth      : [{bar:<20}])")
+
+
+# Base de données patients historiques
+patient_db = [
+    {"name": "Case_001", "age": 45,
+     "symptoms": ["chest pain", "difficulty breathing"],
+     "diagnosis": "Angina — referred to Cardiologist"},
+    {"name": "Case_002", "age": 32,
+     "symptoms": ["fever", "cough", "fatigue"],
+     "diagnosis": "Flu — prescribed rest and medication"},
+    {"name": "Case_003", "age": 67,
+     "symptoms": ["chest pain", "confusion", "dizziness"],
+     "diagnosis": "TIA — emergency neurology"},
+    {"name": "Case_004", "age": 28,
+     "symptoms": ["headache", "nausea", "dizziness"],
+     "diagnosis": "Migraine — prescribed triptans"},
+    {"name": "Case_005", "age": 55,
+     "symptoms": ["difficulty breathing", "fatigue", "cough"],
+     "diagnosis": "COPD exacerbation — pulmonology"},
+]
+
+# Nouveau patient
+new_patient_symptoms = ["chest pain", "difficulty breathing", "fatigue"]
+results = find_similar_patients(new_patient_symptoms, patient_db, top_k=3)
+display_similar_report(new_patient_symptoms, results)
+
+# =======================================================#   VERSION 2   #=======================================================#
 
 
 

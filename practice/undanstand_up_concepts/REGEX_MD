@@ -1,0 +1,199 @@
+ONLINE ::::::  https://share.google/aimode/x4nOQmOqOCwe6f0WW   et https://share.google/aimode/D0fK9i90bczKSXgk6
+
+"""LLM  output PARSER(analyse/traite/extrait) using Regex.
+Use case : Extraire des données structurées à partir de réponses non structurées d'un LLM"
+           (Modèle Linguistique étendu comme GPT-4, Claude, Gemini, etc.)
+
+"""
+import re
+import json
+from typing import Optional
+
+class LLMOutputParser:
+    """
+    PARSER(analyse/traite/extrait) differents output into structured python objects like JSON, lists and so on ..
+    Handles: JSON blocks, key-values paires (dictionnaires), lists , scores.
+    """
+
+    # patterns compilés performaces sur de gros volumes de donnees
+
+    PATTERNS = {
+        "json_block": re.compile(r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```', re.DOTALL),
+
+
+
+    PATTERNS = {
+        "json_block":   re.compile(
+            r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```',
+            re.DOTALL
+
+
+    """
+
+        ``` (début) : Cherche exactement ces trois caractères pour savoir où commence le bloc.
+        ===> r : Supporte les \ (évite que Python ne les transforme).
+        ===>(?:json) : Cherche le mot "json". S'il est là, il le valide mais ne le stocke/capture pas (non-capture).
+        ===> ?\s* : Cherche et saute les espaces ou retours à la ligne. \s* : Le symbole * veut dire "zéro, un ou plusieurs".
+        ===> (\{.*?\}|\[.*?\]) : RECHERCHE ET GARDE (capture) soit ce qui est entre { }, soit ce qui est entre [ ]. C'est ta donnée utile. a cause des parentheses
+        ===> \s* : Cherche et saute/ignore les espaces avant la fin.
+        ``` (fin) : Cherche les trois caractères qui ferment le bloc.
+
+
+        En gros : Ton code dit à Python : "Cherche un bloc qui ressemble à ça, jette l'emballage (```json), et donne-moi juste le contenu à l'intérieur des parenthèses."
+
+        ---------------------
+        \s* : Le symbole * veut dire "zéro, un ou plusieurs" espaces
+        \s* = C'est la version "flexible". On s'en fiche s'il y en a ou pas, le code continue sa recherche.
+        \s : Cherche exactement un seul espace (ou un seul retour à la ligne, une seule tabulation). S'il n'y en a pas, ou s'il y en a deux, ça ne marche pas comme prévu
+        \s = 1 espace obligatoire.
+
+        ----------------
+
+    Voici une correction précise pour que tu ne fasses pas d'erreur d'interprétation :
+    (\{.*?\}|\[.*?\]) :
+
+            Ce n'est pas "ignorer le slash" : Le \ devant la parenthèse \{ sert à dire à
+            l'ordinateur : "Je cherche le vrai caractère {". Sans le \, l'ordinateur croit que
+            tu veux faire un calcul de répétition.
+            .*? : Signifie "n'importe quel caractère" (lettres, chiffres, symboles). Le ? dit de
+            s'arrêter dès qu'on trouve la fermeture \} ou \].
+            Le | : Signifie OU. Il sépare les deux choix : soit un objet {...}, soit une liste [...].
+
+    Ta logique revue point par point :
+        1. (?:json)? : Cherche "json", valide qu'il est là, mais ne le garde pas. (OK)
+        2. \s* : Cherche et saute les espaces (0 ou plusieurs). (OK)
+        3. (\{.*?\}|\[.*?\]) : CAPTURE tout le contenu JSON.
+                Le \{ cherche l'accolade ouvrante.
+                Le .*? prend tout ce qu'il y a dedans. -> carateres. Le ? après l'étoile est donc une sécurité pour dire : "Prends le contenu du bloc, et rien de plus
+                Le \} cherche l'accolade fermante.
+                Le | est l'operateur OU
+                Le \[ cherche le crochet ouvrant
+                Le .*? prend tout ce qu'il y a dedans. -> carateres. Le ? après l'étoile est donc une sécurité pour dire : "Prends le contenu du bloc, et rien de plus
+                Le \] cherche le crochet fermant
+        4. \s* : Cherche et saute les espaces à la fin du bloc. (OK)
+  """
+        ),
+        "json_inline":  re.compile(r'(\{[^{}]+\})', re.DOTALL),
+        "score":        re.compile(
+            r'(?:score|rating|confidence)[:\s]+([0-9.]+)',
+            re.IGNORECASE
+        ),
+        "percentage":   re.compile(r'([0-9.]+)\s*%'),
+        "key_value":    re.compile(
+            r'^([A-Za-z_][A-Za-z0-9_\s]*?):\s*(.+)$',
+            re.MULTILINE
+        ),
+        "bullet_list":  re.compile(
+            r'^[-*•]\s*(.+)$',
+            re.MULTILINE
+        ),
+        "numbered_list":re.compile(
+            r'^\d+[.)]\s*(.+)$',
+            re.MULTILINE
+        ),
+        "emails":       re.compile(
+            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        ),
+        "urls":         re.compile(
+            r'https?://[^\s<>"{}|\\^`\[\]]+'
+        ),
+    }
+
+
+
+SOIT : soit : r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```
+
+    Comprendre le ? et * en regex.
+        En Regex, un symbole (comme ? ou *) s'applique toujours à ce qui se trouve juste avant lui.
+
+       Le .*? prend tout ce qu'il y a dedans
+       et .* alors c'est quoi
+
+    Explication
+       Le .*? prend tout ce qu'il y a dedans. -> carateres. Le ? après l'étoile est donc une sécurité pour dire : "Prends le contenu du bloc, et rien de plus
+
+    C'est la différence la plus importante en Regex ! C'est ce qu'on appelle le mode Gourmand (Greedy) vs le mode Sobre (Lazy).
+    1. .* (Le Gourmand)
+    Il prend tout ce qu'il peut, jusqu'à la dernière fermeture possible.
+        -Exemple : Si tu as ce texte : {"id": 1} et {"id": 2}
+        -Pattern : \{.*\}
+        -Résultat : Il va capturer {"id": 1} et {"id": 2}. Il a "mangé" le milieu parce qu'il a cherché la toute dernière accolade fermante de la ligne.
+    2. .*? (Le Sobre / Fainéant)
+    Il s'arrête dès qu'il trouve la première fermeture qui correspond.
+        -Exemple : {"id": 1} et {"id": 2}
+        -Pattern : \{.*?\}
+        -Résultat : Il va capturer seulement {"id": 1}. Dès qu'il voit la première }, il s'arrête.
+    Pourquoi on utilise .*? pour ton JSON ?
+    Dans ton code, si l'IA répond avec deux blocs de code ou s'il y a du texte après le JSON, utiliser .* (gourmand) risquerait de fusionner plusieurs blocs ou de capturer du texte inutile à la fin, ce qui ferait planter ton json.loads().
+    Le ? après l'étoile est donc une sécurité pour dire : "Prends le contenu du bloc, et rien de plus".
+
+
+
+   Comprendre le * en regex.
+       En Regex, un symbole (comme ? ou *) s'applique toujours à ce qui se trouve juste avant lui.
+
+    Voici la différence entre les deux :
+    ## 1. (?:json)? (Le "json" est optionnel)
+    Ici, le ? s'applique à tout le groupe (?:json).
+
+    (? : ... ) (Le premier bloc) : Il ne demande pas d'ignorer le mot "json", mais de ne pas le capturer. En regex, une parenthèse normale (json) crée un "groupe de capture" (pour le réutiliser plus tard). Ajouter ?: au début permet de grouper les lettres ensemble pour leur appliquer une règle, sans gaspiller de la mémoire pour stocker le résultat.
+    ? (Le second, à la fin) : Tu as tout à fait raison, il rend l'ensemble du groupe précédent optionnel (0 ou 1 fois).
+
+    * Il dit : "Cherche le mot 'json', mais s'il n'est pas là, ce n'est pas grave, le pattern continue."
+    * C'est utile parce que certains blocs de code s'écrivent ```json et d'autres juste ```.
+
+    ## 2. (?:json) (Le "json" est obligatoire)
+    Sans le ? à la fin, le mot "json" doit être présent après les trois backticks. Si le texte est juste ```, le pattern ne trouvera rien.
+    ------------------------------
+    ## Pourquoi tu as confondu avec \s* ?
+    C'est parce qu'il existe deux types de symboles pour la quantité :
+
+    * ? : veut dire 0 ou 1 fois (Optionnel).
+    * * : veut dire 0, 1 ou plusieurs fois (Flexible).
+
+    Dans ton pattern (?:json)?\s* :
+
+    * Le ? rend le mot "json" optionnel.
+    * Le * rend les espaces flexibles (on s'en fiche qu'il y en ait 0 ou 10).
+
+    ## Résumé pour ton aide-mémoire :
+
+    * (...) : Groupe de capture (on garde).
+    * (?:...) : Groupe de non-capture (on vérifie mais on ne garde pas).
+    * ...? : Ce qui précède est optionnel (0 ou 1).
+    * ...* : Ce qui précède est répété (0 ou plusieurs).
+
+
+------------------------------------------------------------------------------------------
+
+   En Regex, un symbole (comme ? ou *) s'applique toujours à ce qui se trouve juste avant lui.
+    Regarde bien le découpage :
+    ## 1. Le mot "json" est géré par le premier ?
+    Dans (?:json)?, le ? est collé à la parenthèse.
+
+    * Il dit à l'ordinateur : « Ce qui est dans la parenthèse (le mot json) est optionnel. S'il est là, tant mieux, sinon, continue. »
+
+    ## 2. Les espaces sont gérés par l'étoile *
+    Dans \s*, c'est l'étoile * qui travaille.
+
+    * Elle dit : « Je cherche des espaces. S'il y en a zéro, un, ou mille, c'est bon, continue. »
+
+    ------------------------------
+    ## Pourquoi ce n'est pas le ? qui gère les espaces ?
+    Parce qu'en Regex, les symboles ne "sautent" pas par-dessus les autres.
+
+    * Le ? regarde ce qui est à sa gauche (le groupe json).
+    * Le * regarde ce qui est à sa gauche (le symbole \s).
+
+    ## Visualise le comme des blocs séparés :
+    [ Bloc JSON optionnel ] + [ Bloc Espaces flexibles ]
+    (?:json)? + \s*
+    Est-ce que tu vois mieux maintenant que chaque "quantificateur" (? ou *) reste dans sa zone et ne s'occupe pas du voisin ?
+
+
+
+ONLINE ::::::  https://share.google/aimode/x4nOQmOqOCwe6f0WW   et https://share.google/aimode/D0fK9i90bczKSXgk6
+
+
+
+

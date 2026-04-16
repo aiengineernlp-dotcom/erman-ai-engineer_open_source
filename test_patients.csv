@@ -1,0 +1,7 @@
+id,name,age,gender,symptoms,source
+                    P001,ahmed ali,34,M,chest pain,web
+                    P002,SARA SMITH,28,F,fever,mobile
+                    P003,Bob Chen,45,M,headache,web
+                    P004,,67,F,confusion,mobile
+                    P005,Ravi Kumar,23,M,cough,web
+                    

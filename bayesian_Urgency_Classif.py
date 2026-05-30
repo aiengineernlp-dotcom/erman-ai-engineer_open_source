@@ -17,13 +17,16 @@ class NaiveBayeClassifierUrgency:
         self.priors_: dict = {}  # Repond a la question Combien de pommmes Vs Combien de Bananes autrement dit, on a dans le dictionnaire: {"pommes": nombre, "banane": nombre}
         self.likelihood_: dict = {}  # Repond a la question, parmi les pommmes combien sont rouges ?
 
-    def fit(X: np.ndarray, y: np.ndarray) -> "NaiveBayeClassifierUrgency":
+    def fit(self,X: np.ndarray, y: np.ndarray) -> "NaiveBayeClassifierUrgency":
         '''
         args:
             -
         params:
             -
         '''
+        n = len(y)
+        n_features    = X.shape[1]
+
         self.classes_ = sorted(list(set(y)))  #
         '''
         set(y) -> retire les classes dupliquees
@@ -48,7 +51,7 @@ class NaiveBayeClassifierUrgency:
 
         return self
 
-    def _log_likelihood(x: np.ndarray, classe: str) -> float:
+    def _log_likelihood(self,x: np.ndarray, classe: str) -> float:
 
         """ Le model utilise ce quil a aprris pour ananlyser un nouveau patient"""
         """ Log P(x| class) using Gaussian assumption."""
@@ -100,11 +103,11 @@ class NaiveBayeClassifierUrgency:
         contributions = {}
 
         for c in self.classes_:
-            mean = self.likelihoods_[class_]["mean"]
-            std = self.likelihoods_[class_]["std"]
+            mean = self.likelihoods_[c]["mean"]
+            std = self.likelihoods_[c]["std"]
             log_probs = stats.norm.logpdf(x, mean, std)
             contributions[c] = dict(
-                zip(feature_names, ll.round(3))
+                zip(feature_names, log_probs.round(3))
             )
 
         return {
@@ -116,7 +119,6 @@ class NaiveBayeClassifierUrgency:
 # Test
 
 
-# somme le nombre de fois que y==c soit -->  "True de la cible est == a True de c "
 
 
 

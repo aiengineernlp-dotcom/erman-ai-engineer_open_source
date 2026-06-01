@@ -35,13 +35,11 @@ class NaiveBayeClassifierUrgency:
         '''
 
         # Calcul du Priors : P(class)
-
         for c in self.classes_:
             n_c = np.sum(y == c)
             self.priors_[c] = (n_c) / n
 
         # Selection du Likelihoods - P(feature|class):
-
         for c in self.classes_:
             X_c = X[y == c]
             self.likelihood_[c] = {
@@ -50,6 +48,7 @@ class NaiveBayeClassifierUrgency:
             }
 
         return self
+
 
     def _log_likelihood(self,x: np.ndarray, classe: str) -> float:
 
@@ -118,6 +117,30 @@ class NaiveBayeClassifierUrgency:
 
 # Test
 
+# Test
+
+# PHASE 1:  Data generation
+
+np.random.seed(42)
+
+n = 500
+
+## les 3 features
+age = np.random.normal(45, 15, n).clip(15, 85)
+
+n_symptomes = np.random.randint(1, 6, n).astype(float)
+
+has_crit = np.andom.choise([0, 1], n, p=[0.7, 0.3])
+
+## Normalization
+
+X = np.column_stack([
+    (age - 45)/45,
+    (n_symptomes-3)/2,
+    has_crit
+])
+
+## variable cible y:
 
 
 

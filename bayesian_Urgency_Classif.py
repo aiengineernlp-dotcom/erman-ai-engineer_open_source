@@ -142,6 +142,49 @@ X = np.column_stack([
 
 ## variable cible y:
 
+y = np.where(
+    has_crit * 0.6
+    + (n_symptomes>3)*0.3
+    + (age>60) * 0.2
+    + np.random.randn(n)*0.1>.5,
+    "HIGH", "LOW")
+
+# Split
+split = int (0.8 * n) # 0.8 * 500 = 400
+X_train = X[:split], X_test = X[split:] # 400 / 100 patients
+y_train = y[:split], y_test = y[split:]
+
+model = NaiveBayeClassifierUrgency()
+model.fit(X_train,y_train)
+y_pred = model.predict(X_test)
+acc = np.mean(y_pred == y_test)
+
+print("=" * 55)
+print(f"{'NAIVE BAYES URGENCY CLASSIFIER':^55}")
+print("=" * 55)
+print(f"  Classes   : {model.classes_}")
+print(f"  Priors    : {model.priors_}")
+print(f"  Accuracy  : {acc:.2%}")
+
+# expliquer un patient
+
+features_name = ["age_norm", "n_symptoms_norm", "has_critical"]
+patient = np.array([1.5, 1.0, 1.0])
+
+explanation = model.explain(patient,features_name)
+print(f"\n  EXPLANATION for new patient:")
+print(f"  Features  : age=67y, 4 symptoms, critical=Yes")
+print(f"  Prediction: {explanation['prediction']}")
+print(f"Proba HIGH: "
+     f"{explanation['probabilities'].get('HIGH',0):.2%}")
+print(f"\n  Feature contributions to HIGH:")
+
+for feat, contrib in explanation[
+    "contributions"
+].get("HIGH",{}).items():
+    direction = "↑" if contrib > -1 else "↓"
+    print(f"   {feat:<20}:{direction} {contrib:.3f}")
+
 
 
 
